@@ -1,5 +1,7 @@
 package datadog
 
+import "strconv"
+
 type HostActionResp struct {
 	Action   string `json:"action"`
 	Hostname string `json:"hostname"`
@@ -10,6 +12,63 @@ type HostActionMute struct {
 	Message  *string `json:"message,omitempty"`
 	EndTime  *string `json:"end,omitempty"`
 	Override *bool   `json:"override,omitempty"`
+}
+
+type HostDef struct {
+	Name             string   `json:"name"`
+	Up               bool     `json:"up"`
+	IsMuted          bool     `json:"is_muted"`
+	LastReportedTime int      `json:"last_reported_time"`
+	Apps             []string `json:"apps"`
+	TagsBySource     struct {
+		Datadog           []string `json:"Datadog"`
+		AmazonWebServices []string `json:"Amazon Web Services"`
+	} `json:"tags_by_source"`
+	AwsName string `json:"aws_name"`
+	Metrics struct {
+		Load   float64 `json:"load"`
+		Iowait float64 `json:"iowait"`
+		CPU    float64 `json:"cpu"`
+	} `json:"metrics"`
+	Sources []string `json:"sources"`
+	Meta    struct {
+		NixV []string `json:"nixV"`
+	} `json:"meta"`
+	HostName string   `json:"host_name"`
+	ID       int      `json:"id"`
+	Aliases  []string `json:"aliases"`
+}
+
+// SearchHosts searches through the hosts facet, returning matching hostnames.
+func (client *Client) FilterHosts(search string) ([]HostDef, error) {
+	type SearchHostsResult struct {
+		TotalReturned int       `json:"total_returned"`
+		HostList      []HostDef `json:"host_list"`
+		TotalMatching int       `json:"total_matching"`
+	}
+
+	var start int
+	api := func(res interface{}) (string, bool) {
+		if res == nil {
+			start = 0
+		} else if res.(SearchHostsResult).TotalReturned == 100 {
+			start += 80
+		} else {
+			return "", false
+		}
+		return "/v1/hosts?filter=" + search + "&start=" + strconv.Itoa(start), true
+	}
+
+	var resCombined []HostDef
+	combine := func(res interface{}) error {
+		resCombined = append(resCombined, res.(SearchHostsResult).HostList...)
+		return nil
+	}
+
+	if err := client.doJsonRequestPaginated("GET", api, "", combine); err != nil {
+		return nil, err
+	}
+	return resCombined, nil
 }
 
 // MuteHost mutes all monitors for the given host
