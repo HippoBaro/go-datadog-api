@@ -91,6 +91,22 @@ func (client *Client) redactError(err error) error {
 	return fmt.Errorf("%s", errString)
 }
 
+func (client *Client) doJsonRequestPaginated(method string, apiFunc func(interface{}) (string, bool), reqbody string, combine func(interface{}) error) error {
+	var out interface{}
+
+	api, keep := apiFunc(out)
+	for keep {
+		if err := client.doJsonRequestUnredacted(method, api, reqbody, out); err != nil {
+			return client.redactError(err)
+		}
+		if err := combine(out); err != nil {
+			return client.redactError(err)
+		}
+		api, keep = apiFunc(out)
+	}
+	return nil
+}
+
 // doJsonRequest is the simplest type of request: a method on a URI that
 // returns some JSON result which we unmarshal into the passed interface. It
 // wraps doJsonRequestUnredacted to redact api and application keys from
