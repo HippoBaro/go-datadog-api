@@ -51,7 +51,7 @@ func (client *Client) FilterHosts(search string) ([]HostDef, error) {
 	api := func(res interface{}) (string, bool) {
 		if res == nil {
 			start = 0
-		} else if res.(SearchHostsResult).TotalReturned == 100 {
+		} else if res.(*SearchHostsResult).TotalReturned == 100 {
 			start += 80
 		} else {
 			return "", false
@@ -59,13 +59,14 @@ func (client *Client) FilterHosts(search string) ([]HostDef, error) {
 		return "/v1/hosts?filter=" + search + "&start=" + strconv.Itoa(start), true
 	}
 
-	var resCombined []HostDef
+	var out SearchHostsResult
+	resCombined := make([]HostDef, 0)
 	combine := func(res interface{}) error {
-		resCombined = append(resCombined, res.(SearchHostsResult).HostList...)
+		resCombined = append(resCombined, res.(*SearchHostsResult).HostList...)
 		return nil
 	}
 
-	if err := client.doJsonRequestPaginated("GET", api, "", combine); err != nil {
+	if err := client.doJsonRequestPaginated("GET", api, "", &out, combine); err != nil {
 		return nil, err
 	}
 	return resCombined, nil

@@ -91,10 +91,8 @@ func (client *Client) redactError(err error) error {
 	return fmt.Errorf("%s", errString)
 }
 
-func (client *Client) doJsonRequestPaginated(method string, apiFunc func(interface{}) (string, bool), reqbody string, combine func(interface{}) error) error {
-	var out interface{}
-
-	api, keep := apiFunc(out)
+func (client *Client) doJsonRequestPaginated(method string, apiFunc func(interface{}) (string, bool), reqbody string, out interface{}, combine func(interface{}) error) error {
+	api, keep := apiFunc(nil)
 	for keep {
 		if err := client.doJsonRequestUnredacted(method, api, reqbody, out); err != nil {
 			return client.redactError(err)
