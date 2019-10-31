@@ -15,28 +15,19 @@ type HostActionMute struct {
 }
 
 type HostDef struct {
-	Name             string   `json:"name"`
-	Up               bool     `json:"up"`
-	IsMuted          bool     `json:"is_muted"`
-	LastReportedTime int      `json:"last_reported_time"`
-	Apps             []string `json:"apps"`
-	TagsBySource     struct {
-		Datadog           []string `json:"Datadog"`
-		AmazonWebServices []string `json:"Amazon Web Services"`
-	} `json:"tags_by_source"`
-	AwsName string `json:"aws_name"`
-	Metrics struct {
-		Load   float64 `json:"load"`
-		Iowait float64 `json:"iowait"`
-		CPU    float64 `json:"cpu"`
-	} `json:"metrics"`
-	Sources []string `json:"sources"`
-	Meta    struct {
-		NixV []string `json:"nixV"`
-	} `json:"meta"`
-	HostName string   `json:"host_name"`
-	ID       int      `json:"id"`
-	Aliases  []string `json:"aliases"`
+	Name             string                 `json:"name"`
+	Up               bool                   `json:"up"`
+	IsMuted          bool                   `json:"is_muted"`
+	LastReportedTime int                    `json:"last_reported_time"`
+	Apps             []string               `json:"apps"`
+	TagsBySource     map[string][]string    `json:"tags_by_source"`
+	AwsName          string                 `json:"aws_name"`
+	Metrics          map[string]interface{} `json:"metrics"`
+	Sources          []string               `json:"sources"`
+	Meta             map[string]interface{} `json:"meta"`
+	HostName         string                 `json:"host_name"`
+	ID               int                    `json:"id"`
+	Aliases          []string               `json:"aliases"`
 }
 
 // SearchHosts searches through the hosts facet, returning matching hostnames.
